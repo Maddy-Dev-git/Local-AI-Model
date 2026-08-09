@@ -1,70 +1,84 @@
-# Local AI Model Hosting (No-Docker)
+# Lightweight Local AI Gateway & Inference Engine (No-Docker)
 
-
-## 💻 Hardware Requirements
-To run models like Qwen2.5-Coder smoothly, the following specs are highly recommended:
-* **RAM:** 16GB (Minimum)
-* **VRAM:** 6GB (Dedicated GPU)
+An optimized, zero-overhead deployment pipeline for running local Large Language Models (LLMs) on resource-constrained host environments. Built to bypass container virtualization overhead, optimize storage bandwidth across secondary partitions, and serve local network client requests.
 
 ---
 
-## ⚙️ Project Overview
-This repository provides a step-by-step setup for hosting local LLMs using **Ollama** and **Open-WebUI**. It is specifically designed for:
-1. Systems where **Docker** is restricted or not preferred.
-2. Users who want to save primary drive space by hosting everything on a **secondary drive (A:)**.
+## 📐 System Architecture & Hardware Requirements
+
+This setup isolates LLM weights and database states from system OS partitions, maximizing I/O throughput and system stability during heavy VRAM allocation.
+
+* **Primary Engine:** Ollama (C++ based Llama.cpp runner)
+* **Serving Layer:** Open-WebUI (Python Native Virtual Environment)
+* **Target Model:** Qwen2.5-Coder (Optimized 4-bit/8-bit Quantized Weights)
+* **Recommended Specs:** 16GB RAM | 6GB Dedicated VRAM
 
 ---
 
-## 🚀 Installation & Setup
+## ⚙️ Key Technical Features
 
-### 1. Engine Installation (Ollama)
-1. Download and run the `OllamaSetup.exe` from [ollama.com](https://ollama.com).
-2. **Crucial:** Once installed, right-click the Ollama icon in your system tray and select **Quit**. The settings below will not apply if the engine is running.
+* **Zero-Docker Virtualization Overhead:** Native execution directly on host hardware for maximum VRAM efficiency and lower idle latency.
+* **Storage-Aware Partition Routing:** Custom environment variable configuration to redirect weight stores (`OLLAMA_MODELS`) and state persistence (`DATA_DIR`) to secondary high-capacity media (`A:` drive).
+* **Edge Network Accessibility:** Multi-device exposure across local subnets using socket binding (`0.0.0.0:8080`).
+* **Automated Runtime Lifecycle:** Single-script execution pipeline (`launch.bat`) managing environment variables, background processes, and virtual environment activation.
 
-### 2. Drive & Environment Configuration
-We redirect all heavy data to the **A:** drive to prevent **C:** drive congestion.
+---
 
-1. Search for **"Environment Variables"** in the Windows Start menu.
-2. Under **User variables**, create the following two entries:
+## 🚀 Step-by-Step Deployment Guide
 
-| Variable Name | Variable Value | Purpose |
+### Step 1: Engine Initialization & Environment Routing
+1. Install **Ollama** via the official installer.
+2. Fully terminate the background instance via system tray before setting variables.
+3. Configure persistent **User Environment Variables** to decouple heavy data from the primary `C:` OS drive:
+
+| Variable Name | Target Path | Engineering Rationale |
 | :--- | :--- | :--- |
-| `OLLAMA_MODELS` | `A:\ollama_storage` | Redirects LLM weights to A: drive |
-| `DATA_DIR` | `A:\webui_data` | Redirects chat history/DB to A: drive |
+| `OLLAMA_MODELS` | `A:\ollama_storage` | Offloads quantized LLM weights off system OS partition |
+| `DATA_DIR` | `A:\webui_data` | Isolates chat history, SQLite DB, and vector storage |
 
-3. Create the folders manually:
+4. Initialize physical storage targets:
    ```cmd
    mkdir A:\ollama_storage
    mkdir A:\webui_data
 
 
-## 3. Native Web-UI Setup
-We install the interface into a Python virtual environment directly on the secondary drive.
-1.Navigate and Initialize:
-   cd /d A:
-   mkdir local_ai_project
-   cd local_ai_project
-2.Create and Activate Virtual Environment:
-   python -m venv ai_env
-   ai_env\Scripts\activate
-3.Install Open-WebUI:
-   pip install open-webui
+### Step 2: Native Environment Provisioning
+Initialize an isolated Python virtual environment directly on the secondary drive:
 
-##4. Verification & Launch
-1.Restart Ollama from your Start menu.
-2.Pull the optimized coding model:
-   ollama pull qwen2.5-coder
-3.Launch the server with network visibility (to access via mobile/other devices):
-   open-webui serve --host 0.0.0.0 --port 8080
+:: Navigate to target drive partition
+cd /d A:
+mkdir local_ai_project
+cd local_ai_project
 
-⚡ Pro-Tip: Automation(For more curious minds)
-Instead of typing commands every time, create a launch.bat file in your project folder:
-   @echo off
-   SET OLLAMA_MODELS=A:\ollama_storage
-   SET DATA_DIR=A:\webui_data
-   start /b ollama serve
-   call A:\local_ai_project\ai_env\Scripts\activate
-   open-webui serve --host 0.0.0.0 --port 8080
+:: Provision and activate isolated environment
+python -m venv ai_env
+ai_env\Scripts\activate
+
+:: Install web serving interface
+pip install open-webui
+
+### Step 3: Deployment & Edge Network Binding
+1)Restart the Ollama daemon.
+2)Pull the targeted coding model:
+         ollama pull qwen2.5-coder
+3)Launch the serving instance bound to all local network adapters:
+         open-webui serve --host 0.0.0.0 --port 8080
 
 
-   📄 Note: You can also find a printable PDF version of this guide in the repository files.
+
+⚡ Automated Production Startup Script (launch.bat)
+To streamline deployment without manual terminal entry, create a launch.bat script in your project root:
+@echo off
+TITLE Local AI Gateway Server
+COLOR 0A
+
+echo [1/3] Setting Storage Environment Variables...
+SET OLLAMA_MODELS=A:\ollama_storage
+SET DATA_DIR=A:\webui_data
+
+echo [2/3] Starting Ollama Daemon...
+start /b ollama serve
+
+echo [3/3] Activating Virtual Environment & Launching Web Gateway...
+call A:\local_ai_project\ai_env\Scripts\activate
+open-webui serve --host 0.0.0.0 --port 8080

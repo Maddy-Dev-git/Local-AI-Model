@@ -45,16 +45,16 @@ This setup isolates LLM weights and database states from system OS partitions, m
 ### Step 2: Native Environment Provisioning
 Initialize an isolated Python virtual environment directly on the secondary drive:
 
-:: Navigate to target drive partition
+:: Navigate to target drive partition: 
 cd /d A:
 mkdir local_ai_project
 cd local_ai_project
 
-:: Provision and activate isolated environment
+:: Provision and activate isolated environment: 
 python -m venv ai_env
 ai_env\Scripts\activate
 
-:: Install web serving interface
+:: Install web serving interface: 
 pip install open-webui
 
 ### Step 3: Deployment & Edge Network Binding

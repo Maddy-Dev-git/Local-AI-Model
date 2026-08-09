@@ -1,6 +1,5 @@
 # Local AI Model Hosting (No-Docker)
 
-> **Disclaimer:** This is an amateur project documentation for hosting an AI model locally. Take everything with a grain of salt. It was built to bypass Docker restrictions and optimize performance using a secondary drive.
 
 ## 💻 Hardware Requirements
 To run models like Qwen2.5-Coder smoothly, the following specs are highly recommended:
